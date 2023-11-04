@@ -2,7 +2,7 @@ import torch, time, numpy as np
 from mylib import evaluate
 ALPHA = 0.5
 BETA = 1.0
-def my_train(model, device, optimizer, sym_train, drug_train, similar_sets_idx):
+def my_train(model, device, optimizer, sym_train, drug_train, similar_sets_idx, data_eval, n_drug):
 
 	model.train()
 	losses = 0.0
@@ -18,10 +18,12 @@ def my_train(model, device, optimizer, sym_train, drug_train, similar_sets_idx):
 		loss.backward()
 		optimizer.step()
 
-		ja, prauc, avg_p, avg_r, avg_f1, avg_med, ddi_rate = evaluate.my_evaluate(
-			model, pklSet.data_eval, pklSet.n_drug, device
+		train_accuracy = evaluate.my_evaluate(
+			model, data_eval, n_drug, device
 		)
-	return train_loss, train_accuracy
+		ja, prauc, avg_p, avg_r, avg_f1, avg_med, ddi_rate = train_accuracy
+
+	return losses, ja
 
 
 def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_freq=10):

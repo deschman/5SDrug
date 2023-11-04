@@ -5,6 +5,8 @@ def my_evaluate(model, test_loader, n_drugs, device="cpu"):
 	model.eval()
 	# see orig code
 
+	return ja, prauc, avg_p, avg_r, avg_f1, avg_med, ddi_rate
+
 def custom_criterion(scores, bpr, loss_ddi, drugs, alpha, beta, device):
 	sig_scores = torch.sigmoid(scores)
 	scores_sigmoid = torch.where(sig_scores == 0, torch.tensor(1.0).to(device), sig_scores)

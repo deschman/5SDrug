@@ -23,12 +23,13 @@ def load_data():
     drug_train = dill.load(open('data/drug_train_50.pkl', 'rb'))
     sym_train = dill.load(open('data/sym_train_50.pkl', 'rb'))
     data_eval = dill.load(open('data/data_eval.pkl', 'rb'))
+    data_test = dill.load(open('data/data_test.pkl', 'rb'))
     # these voc objects have 2 properties - idx2word and word2idx.  Basically a feature mapping
     voc = dill.load(open('data/voc_final.pkl', 'rb'))
     sym_map, pro_map, med_map = voc['sym_voc'], voc['diag_voc'], voc['med_voc']
 
     ddi = dill.load(open('data/ddi_A_final.pkl', 'rb'))
-    return drug_train, sym_train, data_eval, sym_map, pro_map, med_map, ddi
+    return drug_train, sym_train, data_eval, sym_map, pro_map, med_map, ddi, data_test
 
 def get_train_data(n_drug):
     data_train = dill.load(open('data/drug_train.pkl', 'rb'))
