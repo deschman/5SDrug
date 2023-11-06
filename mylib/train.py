@@ -1,7 +1,24 @@
-import torch, time, numpy as np
+"""Trains the model."""
+
+
+# %% Imports
+# %%% Py3 Standard
+import time
+
+# %%% 3rd Party
+import numpy as np
+import torch
+
+# %%% User Defined
 from mylib import evaluate
+
+
+# %% Variables
 ALPHA = 0.5
 BETA = 1.0
+
+
+# %% Functions
 def my_train(model, device, optimizer, sym_train, drug_train, similar_sets_idx, data_eval, n_drug):
 
 	model.train()

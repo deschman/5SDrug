@@ -1,6 +1,17 @@
+"""Evaluates the model."""
+
+
+# %% Imports
+# %%% Py3 Standard
+import time
+
+# %%% 3rd Party
+import numpy as np
 import torch
 import torch.nn.functional as F
-import time, numpy as np
+
+
+# %% Functions
 def my_evaluate(model, test_loader, n_drugs, device="cpu"):
 	model.eval()
 	# see orig code
