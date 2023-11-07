@@ -22,7 +22,7 @@ LEARNING_RATE: float = 2e-4
 BATCH_SIZE: int = 50
 SCORE_THRESHOLD: float = 0.5
 ALPHA: float = 0.5
-NUM_WORKERS: int = 2
+NUM_WORKERS: int = 0
 MODEL_OUTPUT: Path = Path(__file__).parent / 'model_output'
 
 

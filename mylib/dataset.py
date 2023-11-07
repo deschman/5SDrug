@@ -4,7 +4,7 @@
 # %% Imports
 # %%% Py3 Standard
 from pathlib import Path
-from typing import Tuple, Any, Dict, List, Literal
+from typing import Tuple, Any, Dict, List, Literal, Union
 
 # %%% 3rd Party
 import numpy as np
@@ -39,21 +39,30 @@ class SymptomSetDrugSet(Dataset):
 
         data_path: Path = Path(__file__).parent.parent / 'data'
 
-        self.ddi = dill.load(
+        self.ddi: np.ndarray = dill.load(
             open(
                 data_path / 'ddi_A_final.pkl',
                 'rb',
             )
         )
 
-        self.voc: Dict[str, object] = dill.load(
+        # fix Voc pickling
+        voc: Dict[str, object] = dill.load(
             open(
                 data_path / 'voc_final.pkl',
                 'rb',
             )
         )
-        self.n_symptoms: int = len(self.voc['sym_voc'])
-        self.n_drugs: int = len(self.voc['diag_voc'])
+        self.voc: Dict[str, Dict[str, Dict[Union[int, str], Union[str, int]]]] =(
+            {
+                k: {
+                    kk: getattr(v, kk) for kk in ['idx2word', 'word2idx']
+                } for k, v in voc.items()
+            }
+        )
+
+        self.n_symptoms: int = len(self.voc['sym_voc']['idx2word'])
+        self.n_drugs: int = len(self.voc['diag_voc']['idx2word'])
 
         all_training_data: List[List[int]] = dill.load(
             open(
@@ -65,19 +74,31 @@ class SymptomSetDrugSet(Dataset):
             sparse.coo_array(
                 (
                     [1 for _ in all_training_data[p][0]],
-                    all_training_data[p][0],
+                    (
+                        [0 for _ in all_training_data[p][0]],
+                        all_training_data[p][0],
+                    ),
                 ),
-                self.n_symptoms,
+                (
+                    1,
+                    self.n_symptoms,
+                ),
             )
             for p in range(len(all_training_data))
         ]
         self.drug_set: List[sparse.coo_array] = [
             sparse.coo_array(
                 (
-                    [1 for _ in all_training_data[p][1]],
-                    all_training_data[p][1],
+                    [1 for _ in all_training_data[p][2]],
+                    (
+                        [0 for _ in all_training_data[p][2]],
+                        all_training_data[p][2],
+                    ),
                 ),
-                self.n_symptoms,
+                (
+                    1,
+                    self.n_symptoms,
+                ),
             )
             for p in range(len(all_training_data))
         ]
@@ -90,32 +111,16 @@ class SymptomSetDrugSet(Dataset):
         return self.symptom_set[index], self.drug_set[index]
 
 def visit_collate_fn(batch):
-    """
-    DataLoaderIter call - self.collate_fn([self.dataset[i] for i in indices])
-    Thus, 'batch' is a list [(seq_1, label_1), (seq_2, label_2), ... , (seq_N, label_N)]
-    where N is minibatch size, seq_i is a Numpy (or Scipy Sparse) array, and label is an int value
-
-    Returns
-    -------
-    seqs : FloatTensor
-        3D of batch_size X max_length X num_features
-    lengths : LongTensor
-        1D of batch_size
-    labels : LongTensor
-        1D of batch_size
-    """
     max_rows: int = max([b[0].shape[1] for b in batch])
 
-    lengths = [b[0].shape[1] for b in batch]
     seqs = [
         np.pad(batch[b][0].toarray(), ((0, max_rows - batch[b][0].shape[1]), (0, 0))) if len(batch) >= b + 1
         else np.zeros((batch[0][0].shape[1], max_rows))
         for b in range(len(batch))
     ]
-    labels = [b[1] for i, b in enumerate(batch) if i < len(batch)]
+    labels = [b[1].toarray() for i, b in enumerate(batch) if i < len(batch)]
 
     seqs_tensor = torch.LongTensor(seqs)
-    lengths_tensor = torch.LongTensor(lengths)
     labels_tensor = torch.LongTensor(labels)
 
-    return (seqs_tensor, lengths_tensor), labels_tensor
+    return seqs_tensor, labels_tensor
