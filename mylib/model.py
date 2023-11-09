@@ -164,7 +164,7 @@ class Model(nn.Module):
             common_set_embeds.unsqueeze(1),
             all_drug_embeds.transpose(-1, -2),
         ).squeeze(1)
-        scores = F.binary_cross_entropy_with_logits(scores, common_drug)
+        scores = F.binary_cross_entropy_with_logits(scores, common_drug)  # TODO: figure out how to do this
 
         return scores
 
