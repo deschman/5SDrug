@@ -3,7 +3,7 @@
 
 # %% Imports
 # %%% Py3 Standard
-from typing import List
+from typing import List, Set
 
 # %%% 3rd Party
 import torch
@@ -39,20 +39,20 @@ def compute_batch_accuracy(output, target):
         return correct * 100.0 / batch_size
 
 def find_similar_sets(sym_train: torch.Tensor):  # TODO: refactor this for our data shape
-        similar_sets: List[List[int]] = [[] for _ in range(len(sym_train))]
-        for i in range(len(sym_train)):
-            for j in range(len(sym_train[i])):
-                similar_sets[i].append(j)
-
+        similar_sets: List[int] = []
         for idx, sym_batch in enumerate(sym_train):
-            if len(sym_batch) <= 2 or len(sym_batch[0]) <= 2: continue
-            batch_sets = [set(sym_set) for sym_set in sym_batch]
-            for i in range(len(batch_sets)):
-                max_intersection = 0
-                for j in range(len(batch_sets)):
-                    if i == j: continue
-                    if len(batch_sets[i] & batch_sets[j]) > max_intersection:
-                        max_intersection = len(batch_sets[i] & batch_sets[j])
-                        similar_sets[idx][i] = j
+            similar_sets.append(idx)
+            sym_set: List[int] = sym_batch[0].tolist()
+            max_intersection: int = 0
+            for i, comparison_set in enumerate(sym_train):
+                comp_sym_set: List[int] = comparison_set[0].tolist()
+                if len(sym_set) <= 2 or len(comp_sym_set) <= 2 or i == idx: continue
+                similar_symptoms: List[int] = [
+                    symptom for i, symptom in enumerate(comp_sym_set)
+                    if sym_set[i] == symptom
+                ]
+                if len(similar_symptoms) > max_intersection:
+                    max_intersection = len(similar_symptoms)
+                    similar_sets[idx] = i
 
         return similar_sets

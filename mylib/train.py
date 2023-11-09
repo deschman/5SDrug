@@ -4,6 +4,7 @@
 # %% Imports
 # %%% Py3 Standard
 import time
+from typing import List, Tuple
 
 # %%% 3rd Party
 import numpy as np
@@ -55,13 +56,13 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
         # measure data loading time
         data_time.update(time.time() - end)
 
-        input_ = input_.to(device)
-        similar_sets = utils.find_similar_sets(input_)
-        target = target.to(device)
+        input_: torch.Tensor = input_.to(device)
+        similar_sets: List[int] = utils.find_similar_sets(input_)
+        target: torch.Tensor = target.to(device)
 
         optimizer.zero_grad()
-        output = model(input_, target, similar_sets)  # TODO: get similar symptom sets to feed model
-        loss = criterion(output, target)
+        output: Tuple[torch.Tensor, float, torch.Tensor] = model(input_, target, similar_sets)
+        loss = criterion(output[0], target.squeeze(1))
         assert not np.isnan(loss.item()), 'Model diverged with loss = NaN'
 
         loss.backward()
@@ -72,7 +73,7 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
         end = time.time()
 
         losses.update(loss.item(), target.size(0))
-        accuracy.update(utils.compute_batch_accuracy(output, target).item(), target.size(0))
+        accuracy.update(utils.compute_batch_accuracy(output[0], target).item(), target.size(0))
 
         if i % print_freq == 0:
             print(f'Epoch: [{epoch}][{i}/{len(data_loader)}]\t'

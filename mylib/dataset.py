@@ -62,7 +62,7 @@ class SymptomSetDrugSet(Dataset):
         )
 
         self.n_symptoms: int = len(self.voc['sym_voc']['idx2word'])
-        self.n_drugs: int = len(self.voc['diag_voc']['idx2word'])
+        self.n_drugs: int = len(self.voc['med_voc']['idx2word'])
 
         all_training_data: List[List[int]] = dill.load(
             open(

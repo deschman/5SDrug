@@ -43,8 +43,8 @@ class Model(nn.Module):
         )
         self.sym_agg: Attention = Attention(self.embed_dim)
         self.sym_counts = None
-        self.tensor_ddi_adj = torch.tensor(ddi)
-        self.sparse_ddi_adj = sparse.csr_matrix(self.tensor_ddi_adj.detach().cpu().numpy())
+        self.tensor_ddi_adj: torch.Tensor = torch.tensor(ddi)
+        self.sparse_ddi_adj: sparse.csr_matrix = sparse.csr_matrix(ddi)
 
         self.init_parameters()
 
@@ -53,7 +53,13 @@ class Model(nn.Module):
         for weight in self.parameters():
             weight.data.uniform_(-stdv, stdv)
 
-    def forward(self, syms, drugs, similar_idx, device="cpu"):
+    def forward(
+        self,
+        syms: torch.Tensor,
+        drugs: torch.Tensor,
+        similar_idx: List[int],
+        device: str = "cpu",
+    ):
         '''
         :param syms: [batch_size, sym_set_size]
         :param drugs: [batch_size, num_drugs]
@@ -61,29 +67,29 @@ class Model(nn.Module):
         :param device: 'cpu' or 'gpu
         :return:
         '''
-        all_drugs = torch.tensor(range(self.n_drug)).to(device)
-        sym_embeds = self.sym_embeddings(syms.long())
-        all_drug_embeds = self.drug_embeddings(all_drugs)
-        s_set_embeds = self.sym_agg(sym_embeds)
+        all_drugs: torch.Tensor = torch.tensor(range(self.n_drug)).to(device)
+        sym_embeds: torch.Tensor = self.sym_embeddings(syms.long())
+        all_drug_embeds: torch.Tensor = self.drug_embeddings(all_drugs)
+        s_set_embeds: torch.Tensor = self.sym_agg(sym_embeds)
         # s_set_embeds = torch.mean(sym_embeds, dim=1)
-        all_drug_embeds = all_drug_embeds.unsqueeze(0).repeat(
+        all_drug_embeds = all_drug_embeds.repeat(
             s_set_embeds.shape[0],
             1,
             1,
         )
 
-        scores = torch.bmm(
+        scores: torch.Tensor = torch.bmm(
             s_set_embeds.unsqueeze(1),
             all_drug_embeds.transpose(-1, -2),
         ).squeeze(-2)  # [batch_size, n_drug]
-        scores_aug = 0.0
-        batch_neg = 0.0
+        scores_aug: float = 0.0
+        batch_neg: float = 0.0
 
-        neg_pred_prob = torch.sigmoid(scores)
+        neg_pred_prob: torch.Tensor = torch.sigmoid(scores)
         neg_pred_prob = torch.mm(neg_pred_prob.transpose(-1, -2), neg_pred_prob)  # (voc_size, voc_size)
         batch_neg = 0.00001 * neg_pred_prob.mul(self.tensor_ddi_adj).sum()
 
-        if syms.shape[0] > 2 and syms.shape[1] > 2:
+        if syms.shape[0] > 2 and syms.shape[2] > 2:
             scores_aug = self.intraset_augmentation(
                 syms,
                 drugs,
@@ -124,31 +130,32 @@ class Model(nn.Module):
         similar_idx,
         device='cpu',
     ):
-        selected_drugs = drugs[similar_idx]
-        r = torch.tensor(range(drugs.shape[0])).to(device).unsqueeze(1)
-        sym_multihot = torch.zeros((drugs.shape[0], self.n_sym)).to(device)
-        selected_sym_multihot = torch.zeros((
+        selected_drugs: torch.Tensor = drugs[similar_idx]
+        r: torch.Tensor = torch.tensor(range(drugs.shape[0])).to(device).unsqueeze(1)
+        sym_multihot: torch.Tensor = torch.zeros((drugs.shape[0], self.n_sym)).to(device)
+        selected_sym_multihot: torch.Tensor = torch.zeros((
             drugs.shape[0],
             self.n_sym,
         )).to(device)
         sym_multihot[r, syms] = 1
         selected_sym_multihot[r, syms[similar_idx]] =1
 
-        common_sym = sym_multihot * selected_sym_multihot
-        common_sym_sq = common_sym.unsqueeze(-1).repeat(1, 1, self.embed_dim)
-        all_sym_embeds = self.sym_embeddings(
+        common_sym: torch.Tensor = sym_multihot * selected_sym_multihot
+        common_sym_sq: torch.Tensor = common_sym.unsqueeze(-1).repeat(1, 1, self.embed_dim)
+        all_sym_embeds: torch.Tensor = self.sym_embeddings(
             torch.tensor(
                 range(
                     self.n_sym
                 )
             ).to(device)
         ).unsqueeze(0).expand_as(common_sym_sq)
-        common_sym_embeds = common_sym_sq * all_sym_embeds
-        common_set_embeds = self.sym_agg(common_sym_embeds, common_sym)
-        common_drug, diff_drug = drugs * selected_drugs, drugs - selected_drugs
+        common_sym_embeds: torch.Tensor = common_sym_sq * all_sym_embeds
+        common_set_embeds: torch.Tensor = self.sym_agg(common_sym_embeds, common_sym)
+        common_drug: torch.Tensor = drugs * selected_drugs
+        diff_drug: torch.Tensor = drugs - selected_drugs
         diff_drug[diff_drug == -1] = 1
 
-        common_drug_sum = torch.sum(common_drug, -1, True)
+        common_drug_sum: torch.Tensor = torch.sum(common_drug, -1, True)
         diff_drug = torch.sum(diff_drug, -1, True)
         common_drug_sum[common_drug_sum == 0] = 1
         diff_drug[diff_drug == 0] = 1
@@ -222,6 +229,7 @@ class Attention(nn.Module):
         return torch.tanh(weight)
 
     def forward(self, x, mask=None, device='cpu'):
+        x = x.squeeze(1)
         if mask is None:
             weight = torch.softmax(self._aggregate(x), dim=-2)
         else:

@@ -33,9 +33,9 @@ def main():
     # symptom_sets, drug_sets_multihot = etl.get_train_data(len(med_map.idx2word))
     # similar_sets = etl.get_similar_set(sym_train)
     # NOTE: tried to HW4-ify this
-    train_dataset = dataset.SymptomSetDrugSet('train')
-    valid_dataset = dataset.SymptomSetDrugSet('eval')
-    test_dataset = dataset.SymptomSetDrugSet('test')
+    train_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('train')
+    valid_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('eval')
+    test_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('test')
 
     train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=dataset.visit_collate_fn, num_workers=NUM_WORKERS)
     valid_loader = DataLoader(dataset=valid_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=dataset.visit_collate_fn, num_workers=NUM_WORKERS)
@@ -62,8 +62,8 @@ def main():
 
     # epoch loop
     # see train_seizure and seizure_utils.  these were pulled from HW4 with no modification - yet
-    criterion = torch.nn.BCEWithLogitsLoss()
-    optimizer = model.RAdam(mymodel.parameters(), lr=LEARNING_RATE)
+    criterion: torch.nn.BCEWithLogitsLoss = torch.nn.BCEWithLogitsLoss()
+    optimizer: model.RAdam = model.RAdam(mymodel.parameters(), lr=LEARNING_RATE)
 
     best_val_acc: float = 0.0
     train_losses, train_accuracies = [], []
