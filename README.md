@@ -6,18 +6,17 @@ This repository contains code that attempts to re-create the results of Tan et a
 The ["Overleaf project"](https://www.overleaf.com/project/64ed0e08cd636777ff5ceb63) will house all written work.
 
 ## Environment
-torch
-dill
-numpy
+* torch
+* dill
+* numpy
+* scipy
 
 ## Implementation
-This is a multi-label binary classification task. It looks like HW4 will be useful.
+Run the main.py file to run our code.
 
-### Data ETL
-Data is sourced from the [MIMIC website](https://physionet.org/content/mimiciii/1.4/). Documentation can be found there as well.  The provided code base only provides the datasets, so we have no guide for this.  
-We could also use their provided data - this seems like the best use of time.
+### Data
+Data is sourced from the [MIMIC website](https://physionet.org/content/mimiciii/1.4/). However, we use the preprocessed data found in the original code base linked above. 
 
 ### Model
-Section 3 of the paper details the requirements of the model.  We can also use the aforementioned code base as a guide.
+Section 3 of the paper details the requirements of the model.  We use the original implementation.
 
-### Evaluation
