@@ -2,6 +2,10 @@
 
 
 # %% Imports
+# %%% Py3 Standard
+from typing import List
+
+# %%% 3rd Party
 import torch
 
 
@@ -33,3 +37,22 @@ def compute_batch_accuracy(output, target):
         correct = pred.eq(target).sum()
 
         return correct * 100.0 / batch_size
+
+def find_similar_sets(sym_train: torch.Tensor):  # TODO: refactor this for our data shape
+        similar_sets: List[List[int]] = [[] for _ in range(len(sym_train))]
+        for i in range(len(sym_train)):
+            for j in range(len(sym_train[i])):
+                similar_sets[i].append(j)
+
+        for idx, sym_batch in enumerate(sym_train):
+            if len(sym_batch) <= 2 or len(sym_batch[0]) <= 2: continue
+            batch_sets = [set(sym_set) for sym_set in sym_batch]
+            for i in range(len(batch_sets)):
+                max_intersection = 0
+                for j in range(len(batch_sets)):
+                    if i == j: continue
+                    if len(batch_sets[i] & batch_sets[j]) > max_intersection:
+                        max_intersection = len(batch_sets[i] & batch_sets[j])
+                        similar_sets[idx][i] = j
+
+        return similar_sets

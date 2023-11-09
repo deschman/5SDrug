@@ -43,16 +43,11 @@ def hw4_evaluate(model, device, data_loader, criterion, print_freq=10):
         end = time.time()
         for i, (input_, target) in enumerate(data_loader):
 
-            if isinstance(input_, tuple):
-                input_ = tuple([
-                    e.to(device) if isinstance(e, torch.Tensor) else e
-                    for e in input_
-                ])
-            else:
-                input_ = input_.to(device)
+            input_ = input_.to(device)
+            similar = utils.find_similar_sets(input_)
             target = target.to(device)
 
-            output = model(input_)
+            output = model(input_, output, similar)
 
             loss = criterion(output, target)
 

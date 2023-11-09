@@ -51,18 +51,16 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
     model.train()
 
     end = time.time()
-    for i, (input, target) in enumerate(data_loader):
+    for i, (input_, target) in enumerate(data_loader):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if isinstance(input, tuple):
-            input = tuple([e.to(device) if isinstance(e, torch.Tensor) else e for e in input])
-        else:
-            input = input.to(device)
+        input_ = input_.to(device)
+        similar_sets = utils.find_similar_sets(input_)
         target = target.to(device)
 
         optimizer.zero_grad()
-        output = model(input[0], target)  # TODO: get similar symptom sets to feed model
+        output = model(input_, target, similar_sets)  # TODO: get similar symptom sets to feed model
         loss = criterion(output, target)
         assert not np.isnan(loss.item()), 'Model diverged with loss = NaN'
 
