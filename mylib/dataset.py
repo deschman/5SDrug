@@ -11,7 +11,6 @@ import numpy as np
 import dill
 import torch
 from torch.utils.data import Dataset
-from scipy import sparse
 
 
 # %% Classes
@@ -30,9 +29,9 @@ class SymptomSetDrugSet(Dataset):
         The number of symptoms in the dataset
     n_drugs : int
         The number of drugs in the dataset
-    symptom_set : List[sparse.coo_array]
+    symptom_set : List[torch.sparse.Tensor]
         The symptom set for each patient.
-    drug_set : List[sparse.coo_array]
+    drug_set : List[torch.sparse.Tensor]
         The drug set for each patient.
     """
     def __init__(self, dataset: Literal['train', 'eval', 'test']) -> None:
@@ -70,35 +69,25 @@ class SymptomSetDrugSet(Dataset):
                 'rb',
             )
         )
-        self.symptom_set: List[sparse.coo_array] = [
-            sparse.coo_array(
+        self.symptom_set: List[torch.sparse.Tensor] = [
+            torch.sparse_coo_tensor(
                 (
-                    [1 for _ in all_training_data[p][0]],
-                    (
-                        [0 for _ in all_training_data[p][0]],
-                        all_training_data[p][0],
-                    ),
+                    [0 for _ in all_training_data[p][0]],
+                    all_training_data[p][0],
                 ),
-                (
-                    1,
-                    self.n_symptoms,
-                ),
+                [1 for _ in all_training_data[p][0]],
+                size=(1, self.n_symptoms),
             )
             for p in range(len(all_training_data))
         ]
-        self.drug_set: List[sparse.coo_array] = [
-            sparse.coo_array(
+        self.drug_set: List[torch.sparse.Tensor] = [
+            torch.sparse_coo_tensor(
                 (
-                    [1 for _ in all_training_data[p][2]],
-                    (
-                        [0 for _ in all_training_data[p][2]],
-                        all_training_data[p][2],
-                    ),
+                    [0 for _ in all_training_data[p][2]],
+                    all_training_data[p][2],
                 ),
-                (
-                    1,
-                    self.n_drugs,
-                ),
+                [1 for _ in all_training_data[p][2]],
+                size=(1, self.n_drugs),
             )
             for p in range(len(all_training_data))
         ]
