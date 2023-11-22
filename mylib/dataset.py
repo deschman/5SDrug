@@ -97,7 +97,7 @@ class SymptomSetDrugSet(Dataset):
                 ),
                 (
                     1,
-                    self.n_symptoms,
+                    self.n_drugs,
                 ),
             )
             for p in range(len(all_training_data))

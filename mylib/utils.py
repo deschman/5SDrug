@@ -3,7 +3,7 @@
 
 # %% Imports
 # %%% Py3 Standard
-from typing import List, Set
+from typing import List
 
 # %%% 3rd Party
 import torch
@@ -33,8 +33,7 @@ def compute_batch_accuracy(output, target):
     """Computes the accuracy for a batch"""
     with torch.no_grad():
         batch_size = target.size(0)
-        _, pred = output.max(1)
-        correct = pred.eq(target).sum()
+        correct = output.eq(target).sum()
 
         return correct * 100.0 / batch_size
 

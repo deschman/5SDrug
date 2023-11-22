@@ -16,7 +16,6 @@ from scipy import sparse
 
 
 # %% Classes
-# TODO: implement their model.  see original paper and code base for reference.
 class Model(nn.Module):
     def __init__(
         self,
@@ -164,7 +163,7 @@ class Model(nn.Module):
             common_set_embeds.unsqueeze(1),
             all_drug_embeds.transpose(-1, -2),
         ).squeeze(1)
-        scores = F.binary_cross_entropy_with_logits(scores, common_drug)  # TODO: figure out how to do this
+        scores = F.binary_cross_entropy_with_logits(scores, common_drug.squeeze(1).float())  # TODO: figure out how to do this
 
         return scores
 
@@ -204,11 +203,11 @@ class Model(nn.Module):
         diff_drug[diff_drug == 0] = 1
         diff_drug_2[diff_drug_2 == 0] = 1
         diff_drug_embed = torch.bmm(
-            diff_drug_exp.float(),
+            diff_drug_exp.squeeze(1).float(),
             all_drug_embeds,
         ).squeeze() / diff_drug
         diff2_embed = torch.bmm(
-            diff2_exp.float(),
+            diff2_exp.squeeze(1).float(),
             all_drug_embeds,
         ).squeeze() / diff_drug_2
 
@@ -218,7 +217,6 @@ class Model(nn.Module):
 
         return score_aug
 
-# TODO: implement their attention aggregation layer
 class Attention(nn.Module):
     def __init__(self, embed_dim, output_dim = 1):
         super(Attention, self).__init__()
@@ -251,7 +249,6 @@ class Attention(nn.Module):
         ).squeeze(-1)
         return agg_embeds
 
-# TODO: implement their optimizer
 class RAdam(Optimizer):
     def __init__(
         self,

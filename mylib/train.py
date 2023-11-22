@@ -11,38 +11,10 @@ import numpy as np
 import torch
 
 # %%% User Defined
-from mylib import evaluate, utils
-
-
-# %% Variables
-ALPHA = 0.5
-BETA = 1.0
+from mylib import utils
 
 
 # %% Functions
-# def my_train(model, device, optimizer, sym_train, drug_train, similar_sets_idx, data_eval, n_drug):
-
-#     model.train()
-#     losses = 0.0
-
-#     # training loop
-#     for i, (syms, drugs, similar_idx) in enumerate(zip(sym_train, drug_train, similar_sets_idx)):
-#         model.zero_grad()
-#         optimizer.zero_grad()
-#         scores, bpr, loss_ddi = model(syms, drugs, similar_idx, device)
-
-#         loss = evaluate.custom_criterion(scores, bpr, loss_ddi, drugs, ALPHA, BETA, device)
-#         losses += loss.item() / syms.shape[0]
-#         loss.backward()
-#         optimizer.step()
-
-#         train_accuracy = evaluate.my_evaluate(
-#             model, data_eval, n_drug, device
-#         )
-#         ja, prauc, avg_p, avg_r, avg_f1, avg_med, ddi_rate = train_accuracy
-
-#     return losses, ja
-
 def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_freq=10):
     batch_time = utils.AverageMeter()
     data_time = utils.AverageMeter()
@@ -62,7 +34,7 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
 
         optimizer.zero_grad()
         output: Tuple[torch.Tensor, float, torch.Tensor] = model(input_, target, similar_sets)
-        loss = criterion(output[0], target.squeeze(1))
+        loss = criterion(output[0], target.squeeze(1).float())
         assert not np.isnan(loss.item()), 'Model diverged with loss = NaN'
 
         loss.backward()
@@ -73,7 +45,7 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
         end = time.time()
 
         losses.update(loss.item(), target.size(0))
-        accuracy.update(utils.compute_batch_accuracy(output[0], target).item(), target.size(0))
+        accuracy.update(utils.compute_batch_accuracy(output[0], target.squeeze(1)).item(), target.size(0))
 
         if i % print_freq == 0:
             print(f'Epoch: [{epoch}][{i}/{len(data_loader)}]\t'
