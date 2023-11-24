@@ -41,10 +41,10 @@ def find_similar_sets(sym_train: torch.Tensor):  # TODO: refactor this for our d
         similar_sets: List[int] = []
         for idx, sym_batch in enumerate(sym_train):
             similar_sets.append(idx)
-            sym_set: List[int] = sym_batch[0].tolist()
+            sym_set: List[int] = sym_batch.tolist()
             max_intersection: int = 0
             for i, comparison_set in enumerate(sym_train):
-                comp_sym_set: List[int] = comparison_set[0].tolist()
+                comp_sym_set: List[int] = comparison_set.tolist()
                 if len(sym_set) <= 2 or len(comp_sym_set) <= 2 or i == idx: continue
                 similar_symptoms: List[int] = [
                     symptom for i, symptom in enumerate(comp_sym_set)

@@ -30,9 +30,9 @@ class Model(nn.Module):
         self.n_sym: int = n_symptoms
         self.n_drug: int = n_drugs
         self.embed_dim: int = embed_dim
-        # TODO: figure out what sparse tensors break here and best fix
-        self.sym_sets: List[List[int]] = [s.toarray().tolist() for s in symptom_set]  # TODO: refactor
-        self.drug_multihots: torch.Tensor = torch.tensor([s.toarray().tolist() for s in drug_set])  # TODO: refactor
+        # TODO: figure out why the parameters aren't being used
+        # self.sym_sets: List[List[int]] = [s.toarray().tolist() for s in symptom_set]  # TODO: refactor
+        # self.drug_multihots: torch.Tensor = torch.tensor([s.toarray().tolist() for s in drug_set])  # TODO: refactor
         self.sym_embeddings: nn.Embedding = nn.Embedding(
             self.n_sym,
             self.embed_dim,
@@ -89,7 +89,7 @@ class Model(nn.Module):
         neg_pred_prob = torch.mm(neg_pred_prob.transpose(-1, -2), neg_pred_prob)  # (voc_size, voc_size)
         batch_neg = 0.00001 * neg_pred_prob.mul(self.tensor_ddi_adj).sum()
 
-        if syms.shape[0] > 2 and syms.shape[2] > 2:
+        if syms.shape[0] > 2 and syms.shape[1] > 2:
             scores_aug = self.intraset_augmentation(
                 syms,
                 drugs,
@@ -204,11 +204,11 @@ class Model(nn.Module):
         diff_drug[diff_drug == 0] = 1
         diff_drug_2[diff_drug_2 == 0] = 1
         diff_drug_embed = torch.bmm(
-            diff_drug_exp.squeeze(1).float(),
+            diff_drug_exp.float(),
             all_drug_embeds,
         ).squeeze() / diff_drug
         diff2_embed = torch.bmm(
-            diff2_exp.squeeze(1).float(),
+            diff2_exp.float(),
             all_drug_embeds,
         ).squeeze() / diff_drug_2
 

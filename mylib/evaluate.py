@@ -60,8 +60,10 @@ def hw4_evaluate(model, device, data_loader, criterion, print_freq=10):
             y_true = target.detach().to('cpu').numpy().tolist()
             y_true = [y[0] for y in y_true]
             y_pred = output[0].detach().to('cpu').numpy().tolist()
+            # reduce to optimistic prediction
+            y_pred = [round(p[i]) for i, p in zip(np.argmax(y_pred, axis=1), y_pred)]
             results.extend(list(zip(y_true, y_pred)))
-            f1_scores.append(f1_score(np.argmax(y_true, axis=1), np.argmax(y_pred, axis=1), average='macro'))
+            f1_scores.append(f1_score(y_true, y_pred, average='macro'))
             print(sum(f1_scores) / len(f1_scores))
 
             if i % print_freq == 0:

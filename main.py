@@ -52,9 +52,8 @@ def main():
     ).to(device)
 
     # epoch loop
-    # see train_seizure and seizure_utils.  these were pulled from HW4 with no modification - yet
     criterion: torch.nn.BCEWithLogitsLoss = torch.nn.BCEWithLogitsLoss()
-    optimizer: model.RAdam = model.RAdam(mymodel.parameters(), lr=LEARNING_RATE)
+    optimizer: model.RAdam = model.RAdam(mymodel.parameters(), lr=LEARNING_RATE)  # what is mymodel.parameters()?
 
     best_val_acc: float = 0.0
     train_losses, train_accuracies = [], []
