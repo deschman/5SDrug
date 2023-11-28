@@ -20,18 +20,25 @@ from mylib import model, train, evaluate, dataset
 # Defaults
 NUM_WORKERS: int = 0
 MODEL_OUTPUT: Path = Path(__file__).parent / 'model_output'
-NUM_EPOCHS: int = 10
-NUM_PARAMS: int = 10
+NUM_EPOCHS: int = 1  # 10
+NUM_PARAMS: int = 1  # 10
 
 EMBED_DIM: List[int] = [16 * (i + 1) for i in range(NUM_PARAMS)]
 LEARNING_RATE: List[float] = [5e-5 * (i + 1) for i in range(NUM_PARAMS)]
 BATCH_SIZE: List[int] = [12 * (i + 1) for i in range(NUM_PARAMS)]
 ALPHA: List[float] = [0.12 * (i + 1) for i in range(NUM_PARAMS)]
 BETA: List[float] = [0.12 * (i + 1) for i in range(NUM_PARAMS)]
+DEFAULT_CONFIG: Dict[str, Any] = {
+    'embed_dim': EMBED_DIM[0],
+    'learning_rate': LEARNING_RATE[0],
+    'batch_size': BATCH_SIZE[0],
+    'alpha': ALPHA[0],
+    'beta': BETA[0],
+}
 
 
 # %% Functions
-def main(config: Dict[str, Any]) -> None:
+def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
     # load data
     train_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('train')
     valid_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('eval')
@@ -83,7 +90,7 @@ def main(config: Dict[str, Any]) -> None:
         valid_accuracies.append(valid_accuracy)
 
         end_time = time.perf_counter()
-        print(end_time - start_time)
+        print(f'Epoch: [{epoch}/{NUM_EPOCHS}] Time {end_time - start_time}')
 
         is_best = valid_accuracy > best_val_acc
         if is_best:
@@ -99,11 +106,17 @@ def main(config: Dict[str, Any]) -> None:
         config['beta'],
     )
 
-    return {'f1': results[0], 'loss': results[1], 'accuracy': results[2]}
+    return {
+        'f1': results[0],
+        'loss': results[1],
+        'accuracy': results[2],
+        'drug_count': results[3],
+    }
 
 
 # %% Script
 if __name__ == '__main__':
+    main()
     config: Dict[str, Dict[str, Iterable[Any]]] = {
         'embed_dim': tune.grid_search(EMBED_DIM),
         'learning_rate': tune.grid_search(LEARNING_RATE),

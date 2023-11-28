@@ -19,6 +19,7 @@ def hw4_evaluate(model, device, data_loader, alpha, beta, print_freq=10):
     batch_time = utils.AverageMeter()
     losses = utils.AverageMeter()
     accuracy = utils.AverageMeter()
+    drug_count = utils.AverageMeter()
 
     results = []
 
@@ -39,7 +40,7 @@ def hw4_evaluate(model, device, data_loader, alpha, beta, print_freq=10):
                 output[0],
                 output[1],
                 output[2],
-                target.squeeze(1).float(),
+                target.float(),
                 alpha,
                 beta,
                 device,
@@ -51,9 +52,10 @@ def hw4_evaluate(model, device, data_loader, alpha, beta, print_freq=10):
 
             losses.update(loss.item(), target.size(0))
             accuracy.update(
-                utils.compute_batch_accuracy(output[0], target.squeeze(1)).item(),
+                utils.compute_batch_accuracy(output[0].round(), target).item(),
                 target.size(0),
             )
+            drug_count.update(output[0].round().max(axis=1)[0].mean().item())
 
             y_true = target.detach().to('cpu').numpy().tolist()
             y_true = [y[0] for y in y_true]
@@ -68,8 +70,9 @@ def hw4_evaluate(model, device, data_loader, alpha, beta, print_freq=10):
                     f'Test: [{i}/{len(data_loader)}]\t'
                     f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                     f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
-                    f'Accuracy {accuracy.val:.3f} ({accuracy.avg:.3f})'
+                    f'Accuracy {accuracy.val:.3f} ({accuracy.avg:.3f})\t'
+                    f'Drug Count {int(drug_count.val)} ({drug_count.avg:.3f})\t'
                     f'F1 {sum(f1_scores) / len(f1_scores):.3f}'
                 )
 
-    return sum(f1_scores) / len(f1_scores), losses.avg, accuracy.avg
+    return sum(f1_scores) / len(f1_scores), losses.avg, accuracy.avg, drug_count.avg

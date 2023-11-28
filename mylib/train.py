@@ -17,17 +17,14 @@ from mylib import utils
 # %% Functions
 def hw4_train(model, device, data_loader, optimizer, epoch, alpha, beta, print_freq=10):
     batch_time = utils.AverageMeter()
-    data_time = utils.AverageMeter()
     losses = utils.AverageMeter()
     accuracy = utils.AverageMeter()
+    drug_count = utils.AverageMeter()
 
     model.train()
 
     end = time.time()
     for i, (input_, target) in enumerate(data_loader):
-        # measure data loading time
-        data_time.update(time.time() - end)
-
         input_: torch.Tensor = input_.to(device)
         similar_sets: List[int] = utils.find_similar_sets(input_)
         target: torch.Tensor = target.to(device)
@@ -38,7 +35,7 @@ def hw4_train(model, device, data_loader, optimizer, epoch, alpha, beta, print_f
             output[0],
             output[1],
             output[2],
-            target.squeeze(1).float(),
+            target.float(),
             alpha,
             beta,
             device,
@@ -53,13 +50,19 @@ def hw4_train(model, device, data_loader, optimizer, epoch, alpha, beta, print_f
         end = time.time()
 
         losses.update(loss.item(), target.size(0))
-        accuracy.update(utils.compute_batch_accuracy(output[0], target.squeeze(1)).item(), target.size(0))
+        accuracy.update(
+            utils.compute_batch_accuracy(output[0].round(), target).item(),
+            target.size(0),
+        )
+        drug_count.update(output[0].round().max(axis=1)[0].mean().item())
 
         if i % print_freq == 0:
-            print(f'Epoch: [{epoch}][{i}/{len(data_loader)}]\t'
-                  f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  f'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                  f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
-                  f'Accuracy {accuracy.val:.3f} ({accuracy.avg:.3f})')
+            print(
+                f'Epoch: [{epoch}][{i}/{len(data_loader)}]\t'
+                f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
+                f'Accuracy {accuracy.val:.3f} ({accuracy.avg:.3f})\t'
+                f'Drug Count {int(drug_count.val)} ({drug_count.avg:.3f})'
+            )
 
     return losses.avg, accuracy.avg

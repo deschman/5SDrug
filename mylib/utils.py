@@ -34,9 +34,9 @@ def compute_batch_accuracy(output, target):
     """Computes the accuracy for a batch"""
     with torch.no_grad():
         batch_size = target.size(0)
-        correct = output.eq(target).sum()
+        correct = output.eq(target).sum(axis=0)
 
-        return correct * 100.0 / batch_size
+        return (correct * 100.0 / batch_size).mean()
 
 def find_similar_sets(sym_train: torch.Tensor):  # TODO: refactor this for our data shape
         similar_sets: List[int] = []
