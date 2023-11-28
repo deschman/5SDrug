@@ -73,6 +73,7 @@ class Model(nn.Module):
             1,
         )
 
+        # TODO: figure out why all scores are 0
         scores: torch.Tensor = torch.bmm(
             s_set_embeds.unsqueeze(1),
             all_drug_embeds.transpose(-1, -2),

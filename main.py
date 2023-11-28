@@ -75,7 +75,7 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
             config['alpha'],
             config['beta'],
         )
-        valid_loss, valid_accuracy, _ = evaluate.hw4_evaluate(
+        valid_loss, valid_accuracy, _, _ = evaluate.hw4_evaluate(
             mymodel,
             device,
             valid_loader,
@@ -116,7 +116,7 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
 
 # %% Script
 if __name__ == '__main__':
-    main()
+    # main()
     config: Dict[str, Dict[str, Iterable[Any]]] = {
         'embed_dim': tune.grid_search(EMBED_DIM),
         'learning_rate': tune.grid_search(LEARNING_RATE),
