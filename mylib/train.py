@@ -15,7 +15,7 @@ from mylib import utils
 
 
 # %% Functions
-def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_freq=10):
+def hw4_train(model, device, data_loader, optimizer, epoch, alpha, beta, print_freq=10):
     batch_time = utils.AverageMeter()
     data_time = utils.AverageMeter()
     losses = utils.AverageMeter()
@@ -34,7 +34,15 @@ def hw4_train(model, device, data_loader, criterion, optimizer, epoch, print_fre
 
         optimizer.zero_grad()
         output: Tuple[torch.Tensor, float, torch.Tensor] = model(input_, target, similar_sets)
-        loss = criterion(output[0], target.squeeze(1).float())
+        loss = utils.custom_criterion(
+            output[0],
+            output[1],
+            output[2],
+            target.squeeze(1).float(),
+            alpha,
+            beta,
+            device,
+        )
         assert not np.isnan(loss.item()), 'Model diverged with loss = NaN'
 
         loss.backward()

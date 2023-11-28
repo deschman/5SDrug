@@ -22,17 +22,12 @@ class Model(nn.Module):
         n_symptoms: int,
         n_drugs: int,
         ddi: np.ndarray,
-        symptom_set: List[torch.sparse.Tensor],
-        drug_set: List[torch.sparse.Tensor],
         embed_dim: int,
     ):
         super(Model, self).__init__()
         self.n_sym: int = n_symptoms
         self.n_drug: int = n_drugs
         self.embed_dim: int = embed_dim
-        # TODO: figure out why the parameters aren't being used
-        # self.sym_sets: List[List[int]] = [s.toarray().tolist() for s in symptom_set]  # TODO: refactor
-        # self.drug_multihots: torch.Tensor = torch.tensor([s.toarray().tolist() for s in drug_set])  # TODO: refactor
         self.sym_embeddings: nn.Embedding = nn.Embedding(
             self.n_sym,
             self.embed_dim,

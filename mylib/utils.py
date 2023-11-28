@@ -7,6 +7,7 @@ from typing import List
 
 # %%% 3rd Party
 import torch
+import torch.nn.functional as F
 
 
 # %% Classes
@@ -55,3 +56,12 @@ def find_similar_sets(sym_train: torch.Tensor):  # TODO: refactor this for our d
                     similar_sets[idx] = i
 
         return similar_sets
+
+def custom_criterion(scores, bpr, loss_ddi, drugs, alpha, beta, device):
+    sig_scores = torch.sigmoid(scores)
+    scores_sigmoid = torch.where(sig_scores == 0, torch.tensor(1.0).to(device), sig_scores)
+
+    bce_loss = F.binary_cross_entropy_with_logits(scores, drugs)
+    entropy = -torch.mean(sig_scores * (torch.log(scores_sigmoid) - 1))
+    loss = bce_loss + 0.5 * entropy + alpha * bpr + beta * loss_ddi
+    return loss
