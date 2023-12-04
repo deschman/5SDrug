@@ -5,7 +5,7 @@
 # %%% Py3 Standard
 import time
 from pathlib import Path
-from typing import List, Dict, Iterable, Any
+from typing import List, Dict, Iterable, Any, Tuple
 
 # %%% 3rd Party
 import torch
@@ -20,14 +20,13 @@ from mylib import model, train, evaluate, dataset
 # Defaults
 NUM_WORKERS: int = 0
 MODEL_OUTPUT: Path = Path(__file__).parent / 'model_output'
-NUM_EPOCHS: int = 10
-NUM_PARAMS: int = 5
+NUM_EPOCHS: int = 200
 
-EMBED_DIM: List[int] = [16 * (i + 1) for i in range(NUM_PARAMS)]
-LEARNING_RATE: List[float] = [0.1 * (i + 1) for i in range(NUM_PARAMS)]
-BATCH_SIZE: List[int] = [25 * (i + 1) for i in range(NUM_PARAMS)]
-ALPHA: List[float] = [0.25 * (i + 1) for i in range(NUM_PARAMS)]
-BETA: List[float] = [0.25 * (i + 1) for i in range(NUM_PARAMS)]
+EMBED_DIM: List[int] = [32]  # [32, 24]
+LEARNING_RATE: List[float] = [0.1]  # [0.1, 0.01]
+BATCH_SIZE: List[int] = [100]  # [500]
+ALPHA: List[float] = [0.5]  # [0.5, 0.25]
+BETA: List[float] = [0.75]
 DEFAULT_CONFIG: Dict[str, Any] = {
     'embed_dim': EMBED_DIM[0],
     'learning_rate': LEARNING_RATE[0],
@@ -44,14 +43,32 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
     valid_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('eval')
     test_dataset: dataset.SymptomSetDrugSet = dataset.SymptomSetDrugSet('test')
 
-    train_loader = DataLoader(dataset=train_dataset, batch_size=config['batch_size'], shuffle=True, collate_fn=dataset.visit_collate_fn, num_workers=NUM_WORKERS)
-    valid_loader = DataLoader(dataset=valid_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=dataset.visit_collate_fn, num_workers=NUM_WORKERS)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=config['batch_size'], shuffle=False, collate_fn=dataset.visit_collate_fn, num_workers=NUM_WORKERS)
+    train_loader: DataLoader = DataLoader(
+        dataset=train_dataset,
+        batch_size=config['batch_size'],
+        shuffle=True,
+        collate_fn=dataset.visit_collate_fn,
+        num_workers=NUM_WORKERS,
+    )
+    valid_loader: DataLoader = DataLoader(
+        dataset=valid_dataset,
+        batch_size=config['batch_size'],
+        shuffle=False,
+        collate_fn=dataset.visit_collate_fn,
+        num_workers=NUM_WORKERS,
+    )
+    test_loader: DataLoader = DataLoader(
+        dataset=test_dataset,
+        batch_size=config['batch_size'],
+        shuffle=False,
+        collate_fn=dataset.visit_collate_fn,
+        num_workers=NUM_WORKERS,
+    )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # instantiate model
-    mymodel = model.Model(
+    mymodel: model.Model = model.Model(
         train_dataset.n_symptoms,
         train_dataset.n_drugs,
         train_dataset.ddi,
@@ -59,14 +76,14 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
     ).to(device)
 
     # epoch loop
-    optimizer: model.RAdam = model.RAdam(mymodel.parameters(), lr=config['learning_rate'])
+    optimizer: model.RAdam = model.RAdam(
+        mymodel.parameters(),
+        lr=config['learning_rate'],
+    )
 
-    best_val_acc: float = 0.0
-    train_losses, train_accuracies = [], []
-    valid_losses, valid_accuracies = [], []
+    best_f1: float = 0.0
     for epoch in range(NUM_EPOCHS):
-        start_time = time.perf_counter()
-        train_loss, train_accuracy = train.hw4_train(
+        train.hw4_train(
             mymodel,
             device,
             train_loader,
@@ -75,30 +92,30 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
             config['alpha'],
             config['beta'],
         )
-        valid_loss, valid_accuracy, _, _ = evaluate.hw4_evaluate(
-            mymodel,
-            device,
-            valid_loader,
-            config['alpha'],
-            config['beta'],
-        )
 
-        train_losses.append(train_loss)
-        valid_losses.append(valid_loss)
+        if epoch + 1 % 5 == 0:
+            start_time: float = time.perf_counter()
+            val: Tuple[float, float, float, float, int] = evaluate.hw4_evaluate(
+                mymodel,
+                device,
+                valid_loader,
+                config['alpha'],
+                config['beta'],
+            )
 
-        train_accuracies.append(train_accuracy)
-        valid_accuracies.append(valid_accuracy)
+            end_time: float = time.perf_counter()
+            print(f'Epoch: [{epoch}/{NUM_EPOCHS}] Time {end_time - start_time}')
 
-        end_time = time.perf_counter()
-        print(f'Epoch: [{epoch}/{NUM_EPOCHS}] Time {end_time - start_time}')
-
-        is_best = valid_accuracy > best_val_acc
-        if is_best:
-            best_val_acc = valid_accuracy
-            torch.save(mymodel, MODEL_OUTPUT, _use_new_zipfile_serialization=False)
+            if val[0] > best_f1:
+                best_f1 = val[0]
+                torch.save(
+                    mymodel,
+                    MODEL_OUTPUT,
+                    _use_new_zipfile_serialization=False,
+                )
 
     # evaluate
-    results = evaluate.hw4_evaluate(
+    test: Tuple[float, float, float, float, int] = evaluate.hw4_evaluate(
         mymodel,
         device,
         test_loader,
@@ -107,10 +124,11 @@ def main(config: Dict[str, Any] = DEFAULT_CONFIG) -> None:
     )
 
     return {
-        'f1': results[0],
-        'loss': results[1],
-        'accuracy': results[2],
-        'drug_count': results[3],
+        'f1': test[0],
+        'loss': test[1],
+        'accuracy': test[2],
+        'drug_count': test[3],
+        'ddi_count': test[4],
     }
 
 

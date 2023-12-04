@@ -96,26 +96,15 @@ class SymptomSetDrugSet(Dataset):
         return len(self.symptom_set)
 
     def __getitem__(self, index: int) -> Tuple[Any]:
-        # returns will be wrapped as List of Tensor(s) by DataLoader
         return self.symptom_set[index], self.drug_set[index]
 
-def visit_collate_fn(batch):
-    # max_rows: int = max([b[0].shape[1] for b in batch])
-
-    # seqs = [
-    #     np.pad(batch[b][0].toarray(), ((0, max_rows - batch[b][0].shape[1]), (0, 0))) if len(batch) >= b + 1
-    #     else np.zeros((batch[0][0].shape[1], max_rows))
-    #     for b in range(len(batch))
-    # ]
-    # labels = [b[1].toarray() for i, b in enumerate(batch) if i < len(batch)]
-
-    # seqs_tensor = torch.LongTensor(seqs)
-    # labels_tensor = torch.LongTensor(labels)
-
-    # return seqs_tensor, labels_tensor
+def visit_collate_fn(
+    batch: List[Tuple[torch.sparse.Tensor]]
+) -> Tuple[torch.Tensor, torch.Tensor]:
     seqs: List[torch.Tensor] = []
     labels: List[torch.Tensor] = []
     for b in batch:
         seqs.append(b[0].to_dense())
         labels.append(b[1].to_dense())
+
     return torch.cat(seqs, dim=0), torch.cat(labels, dim=0)

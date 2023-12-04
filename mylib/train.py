@@ -9,28 +9,38 @@ from typing import List, Tuple
 # %%% 3rd Party
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 
 # %%% User Defined
 from mylib import utils
 
 
 # %% Functions
-def hw4_train(model, device, data_loader, optimizer, epoch, alpha, beta, print_freq=10):
-    batch_time = utils.AverageMeter()
-    losses = utils.AverageMeter()
-    accuracy = utils.AverageMeter()
-    drug_count = utils.AverageMeter()
+def hw4_train(
+    model: torch.nn.Module,
+    device: str,
+    data_loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    epoch: int,
+    alpha: float,
+    beta: float,
+    print_freq: int = 10,
+):
+    batch_time: utils.AverageMeter = utils.AverageMeter()
+    losses: utils.AverageMeter = utils.AverageMeter()
+    accuracy: utils.AverageMeter = utils.AverageMeter()
+    drug_count: utils.AverageMeter = utils.AverageMeter()
 
     model.train()
 
-    end = time.time()
+    end: float = time.time()
     for i, (input_, target) in enumerate(data_loader):
         input_: torch.Tensor = input_.to(device)
         similar_sets: List[int] = utils.find_similar_sets(input_)
         target: torch.Tensor = target.to(device)
 
         optimizer.zero_grad()
-        output: Tuple[torch.Tensor, float, torch.Tensor] = model(input_, target, similar_sets)
+        output: Tuple[torch.Tensor, torch.Tensor, float] = model(input_, target, similar_sets)
         loss = utils.custom_criterion(
             output[0],
             output[1],
